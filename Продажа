@@ -1,0 +1,46 @@
+// server.js
+import express from "express";
+import fetch from "node-fetch";
+import bodyParser from "body-parser";
+
+const app = express();
+app.use(bodyParser.json());
+
+const BOT_TOKEN = "8203835302:AAHTmQ8nW0EJlk-GtYJMoYjxWgmr-SBQsko"; // вставь свой новый токен
+const CHAT_ID = "8431821142"; // вставь свой chat ID
+
+// Роут для получения заказа с фронтенда
+app.post("/send-order", async (req, res) => {
+  const { product, city, address, date, time } = req.body;
+
+  if (!product || !city || !address || !date || !time) {
+    return res.status(400).json({ ok: false, error: "Не все поля заполнены" });
+  }
+
+  const message =
+    "🛒 Новая заявка!\n\n" +
+    `Товар: ${product}\n` +
+    `Город: ${city}\n` +
+    `Адрес: ${address}\n` +
+    `Дата: ${date}\n` +
+    `Время: ${time}\n` +
+    "💰 Пользователь подтвердил оплату";
+
+  try {
+    const response = await fetch(
+      `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(message)}`
+    );
+    const data = await response.json();
+    if (data.ok) {
+      res.json({ ok: true });
+    } else {
+      res.status(500).json({ ok: false, error: "Ошибка Telegram API" });
+    }
+  } catch (err) {
+    res.status(500).json({ ok: false, error: "Ошибка соединения с Telegram" });
+  }
+});
+
+app.listen(3000, () => {
+  console.log("Сервер запущен на http://localhost:3000");
+});
