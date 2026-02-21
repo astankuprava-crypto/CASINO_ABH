@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Оформление заказа</title>
+<style>
+body{ font-family: Arial; background: linear-gradient(135deg,#667eea,#764ba2); text-align:center; color:white;}
+.container{background:white;color:black;width:500px;max-width:95%;margin:40px auto;padding:25px;border-radius:15px;box-shadow:0 0 25px rgba(0,0,0,0.3);}
+select,input,button{width:90%;padding:10px;margin:8px;border-radius:8px;border:1px solid #ccc;}
+button{background:#667eea;color:white;font-size:16px;cursor:pointer;transition:0.3s;border:none;}
+button:hover{background:#5a67d8;}
+#paymentBlock{display:none;margin-top:20px;padding:15px;background:#f3f4f6;border-radius:10px;}
+#status{margin-top:15px;font-weight:bold;}
+.label{font-weight:bold;margin-top:10px;display:block;}
+</style>
+</head>
+<body>
+
+<h1>Оформление заказа</h1>
+
+<div class="container">
+<select id="product" required>
+<option value="">Выберите товар</option>
+<option value="Товар 1">Товар 1</option>
+<option value="Товар 2">Товар 2</option>
+<option value="Товар 3">Товар 3</option>
+</select>
+
+<input type="text" id="city" placeholder="Город" required>
+<input type="text" id="address" placeholder="Адрес доставки" required>
+<label class="label">Выберите дату доставки</label>
+<input type="date" id="date" required>
+<label class="label">Выберите время доставки</label>
+<input type="time" id="time" required>
+
+<button id="orderBtn">Заказать</button>
+
+<div id="paymentBlock">
+<h3>Оплатите переводом:</h3>
+<p><b>2200 0000 0000 0000</b></p>
+<button id="paidBtn">Я оплатил</button>
+</div>
+
+<p id="status"></p>
+</div>
+
+<script>
+// СЮДА ВСТАВЬ СВОЙ PUBLIC WEBHOOK URL (сервер, который будет отправлять в Telegram)
+const WEBHOOK_URL = "https://your-server.com/send-order";
+
+const orderBtn = document.getElementById("orderBtn");
+const paidBtn = document.getElementById("paidBtn");
+const paymentBlock = document.getElementById("paymentBlock");
+const statusText = document.getElementById("status");
+
+orderBtn.addEventListener("click", function(){
+    const product = document.getElementById("product").value.trim();
+    const city = document.getElementById("city").value.trim();
+    const address = document.getElementById("address").value.trim();
+    const date = document.getElementById("date").value;
+    const time = document.getElementById("time").value;
+
+    if(!product || !city || !address || !date || !time){
+        alert("Заполните все данные!");
+        return;
+    }
+
+    paymentBlock.style.display = "block";
+    paymentBlock.scrollIntoView({behavior: "smooth"});
+});
+
+paidBtn.addEventListener("click", async function(){
+    const product = document.getElementById("product").value.trim();
+    const city = document.getElementById("city").value.trim();
+    const address = document.getElementById("address").value.trim();
+    const date = document.getElementById("date").value;
+    const time = document.getElementById("time").value;
+
+    statusText.innerHTML = "⏳ Отправка...";
+
+    try{
+        const response = await fetch(WEBHOOK_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ product, city, address, date, time })
+        });
+
+        const data = await response.json();
+        if(data.ok){
+            statusText.innerHTML = "✅ Заявка отправлена!";
+            paymentBlock.style.display = "none";
+        }else{
+            statusText.innerHTML = "❌ Ошибка отправки: "+(data.error || "Неизвестно");
+        }
+    }catch(error){
+        statusText.innerHTML = "❌ Ошибка соединения с сервером!";
+    }
+});
+</script>
+
+</body>
+</html>
